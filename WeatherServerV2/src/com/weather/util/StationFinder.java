@@ -21,7 +21,7 @@ import com.weather.sql.MySqlConnection;
 
 public class StationFinder {
 
-	public void findNearestStation(String longitude, String latitude) {
+	public void findNearestStation(String csvLong, String csvLat) {
 
 		String sql = "select * from master_station where latitude like ? and longitude like ? ";
 
@@ -48,6 +48,8 @@ public class StationFinder {
 				double stationLong = rs.getDouble(3);
 				double stationLat = rs.getDouble(4);
 				
+				calculateStationGeocode(csvLong, csvLat, stationLong, stationLat);
+				
 			}
 
 		} catch (SQLException e) {
@@ -57,9 +59,10 @@ public class StationFinder {
 	}
 	
 	
-	private void calculateGeocodes(double csvLong, double csvLat ,
+	private void calculateStationGeocode(String csvLong, String csvLat ,
 			double stationLong, double stationLat) {
 		
+		//some logic to find nearest station
 		
 		
 	}
