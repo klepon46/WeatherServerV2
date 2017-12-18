@@ -31,7 +31,7 @@ public class StationFinder {
 
 	public void findNearestStation(String countryOrState) {
 
-		String sql = "select * from master_station where name like ? ";
+		String sql = "select * from master_station where name like ? and id like ?";
 
 		try {
 			MySqlConnection mySqlDB = new MySqlConnection();
@@ -39,6 +39,8 @@ public class StationFinder {
 
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, "%" + countryOrState + "%");
+			ps.setString(2, "COOP%");
+			
 
 			ResultSet rs = ps.executeQuery();
 
@@ -75,7 +77,7 @@ public class StationFinder {
 			}
 		}
 
-		System.out.println(min.getKey()); // 0.1
+		System.out.println(min.getKey()); 
 
 		String nearestStation = min.getKey();
 		updateCsvNearestStation(nearestStation);
@@ -101,7 +103,7 @@ public class StationFinder {
 
 		try {
 
-			String url = "https://maps.googleapis.com/maps/api/geocode/json?" + "latlng=" + longLat
+			String url = "https://maps.googleapis.com/maps/api/geocode/json?" + "latlng=" + geocode
 					+ "&sensor=false&key=" + apiKey;
 
 			DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -118,7 +120,6 @@ public class StationFinder {
 			BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
 
 			String output;
-			System.out.println("Output from Server .... \n");
 			while ((output = br.readLine()) != null) {
 				sb.append(output);
 			}
@@ -133,6 +134,7 @@ public class StationFinder {
 		}
 
 		String stateOrCountryCode = getCountryCode(sb.toString());
+		System.out.println( "negara = " + stateOrCountryCode);
 		findNearestStation(stateOrCountryCode);
 
 	}
@@ -254,4 +256,32 @@ public class StationFinder {
 
 	}
 
+	
+	public void getAllNullStationID(){
+		
+		String sql = "select * from station_info where stationID is null ";
+		
+		try {
+			MySqlConnection mySqlDB = new MySqlConnection();
+			Connection conn = mySqlDB.getConnection();
+
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+
+
+			while (rs.next()) {
+				String csvLong = rs.getString(5);
+				String csvLat = rs.getString(6);
+				
+				String longLat = csvLong + "," + csvLat;
+				reverseGeocode(longLat);
+
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 }

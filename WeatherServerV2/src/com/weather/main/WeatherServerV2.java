@@ -1,6 +1,7 @@
 package com.weather.main;
 
 import com.weather.util.StationFinder;
+import com.weather.util.StationHistoryFetcher;
 
 public class WeatherServerV2 {
 
@@ -16,8 +17,11 @@ public class WeatherServerV2 {
 		// sf.downloadAllStation();
 		
 		//find nearest station
-		StationFinder finder = new StationFinder();
-		finder.reverseGeocode("");
+		//StationFinder finder = new StationFinder();
+		//finder.getAllNullStationID();
+		
+		StationHistoryFetcher fetcher = new StationHistoryFetcher();
+		fetcher.getStationHistory("COOP:010063");
 		
 		System.out.println("done");
 
