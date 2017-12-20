@@ -28,10 +28,17 @@ import com.weather.sql.MySqlConnection;
 public class StationFinder {
 
 	private Map<String, Integer> stationMaps;
+	
+	public void findByTraversing(){
+		
+		
+		
+	}
 
-	public void findNearestStation(String countryOrState) {
+	public void findNearestStationByContryCode(String countryOrState, String csvGeocode) {
 
-		String sql = "select * from master_station where name like ? and id like ?";
+		stationMaps = new HashMap<>();
+		String sql = "select * from master_station where name like ? ";
 
 		try {
 			MySqlConnection mySqlDB = new MySqlConnection();
@@ -39,18 +46,16 @@ public class StationFinder {
 
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, "%" + countryOrState + "%");
-			ps.setString(2, "COOP%");
-			
 
 			ResultSet rs = ps.executeQuery();
 
-			int rowcount = 0;
-			if (rs.last()) {
-				rowcount = rs.getRow();
-				rs.beforeFirst();
-			}
-
-			System.out.println(rowcount);
+			// int rowcount = 0;
+			// if (rs.last()) {
+			// rowcount = rs.getRow();
+			// rs.beforeFirst();
+			// }
+			//
+			// System.out.println(rowcount);
 
 			while (rs.next()) {
 
@@ -58,11 +63,8 @@ public class StationFinder {
 				double longitude = rs.getDouble(3);
 				double latitude = rs.getDouble(4);
 
-				String longLat = String.valueOf(longitude) + "," + String.valueOf(latitude);
-
-				System.out.println(longLat);
-
-				calculateNearestDistance(stationId, longLat);
+				String destGeocode = String.valueOf(longitude) + "," + String.valueOf(latitude);
+				calculateNearestDistance(stationId, csvGeocode, destGeocode);
 
 			}
 
@@ -77,10 +79,11 @@ public class StationFinder {
 			}
 		}
 
-		System.out.println(min.getKey()); 
-
-		String nearestStation = min.getKey();
-		updateCsvNearestStation(nearestStation);
+		
+		if(min != null){
+			String nearestStation = min.getKey();
+			updateCsvNearestStation(nearestStation, csvGeocode);
+		}
 
 	}
 
@@ -90,10 +93,8 @@ public class StationFinder {
 
 	}
 
-	public void reverseGeocode(String geocode) {
-		System.out.println("starting to reverse");
-
-		stationMaps = new HashMap<>();
+	public void reverseGeocode(String csvGeocode) {
+		System.out.println("starting to reverse this : " + csvGeocode);
 
 		String longitude = "38.0114393";
 		String latitude = "-89.2361935";
@@ -103,7 +104,7 @@ public class StationFinder {
 
 		try {
 
-			String url = "https://maps.googleapis.com/maps/api/geocode/json?" + "latlng=" + geocode
+			String url = "https://maps.googleapis.com/maps/api/geocode/json?" + "latlng=" + csvGeocode
 					+ "&sensor=false&key=" + apiKey;
 
 			DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -134,8 +135,9 @@ public class StationFinder {
 		}
 
 		String stateOrCountryCode = getCountryCode(sb.toString());
-		System.out.println( "negara = " + stateOrCountryCode);
-		findNearestStation(stateOrCountryCode);
+		System.out.println("reverse result = " + stateOrCountryCode);
+
+		findNearestStationByContryCode(stateOrCountryCode, csvGeocode);
 
 	}
 
@@ -163,17 +165,17 @@ public class StationFinder {
 
 	}
 
-	public void calculateNearestDistance(String stationId, String destLongLat) {
+	public void calculateNearestDistance(String stationId, String csvGeocode, String destGeocode) {
 
-		System.out.println("Start calculating...");
+		System.out.println("starting to calculating distance : " + csvGeocode + " to " + destGeocode);
 
 		String distanceMatrixApiKey = "AIzaSyBEn4emhP2aMKM-4ZAJXL-6FD19H8L09S4";
 		String origin = "38.0114393,-89.2361935";
 		String destination = "41.4255,-91.0094";
 		StringBuilder sb = new StringBuilder();
 
-		String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=" + origin + "&destinations="
-				+ destLongLat + "&key=" + distanceMatrixApiKey;
+		String url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=" + csvGeocode + "&destinations="
+				+ destGeocode + "&key=" + distanceMatrixApiKey;
 
 		try {
 			DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -189,7 +191,6 @@ public class StationFinder {
 			BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
 
 			String output;
-			System.out.println("Output from Server .... \n");
 			while ((output = br.readLine()) != null) {
 				sb.append(output);
 			}
@@ -205,15 +206,22 @@ public class StationFinder {
 
 		int distanceValue = parseJsonDistace(sb.toString());
 
-		System.out.println(stationId + " = " + distanceValue);
+		System.out.println("the distance is : " + distanceValue);
 
 		stationMaps.put(stationId, distanceValue);
 
 	}
 
 	private int parseJsonDistace(String jsonToParse) {
+		int distanceValue = 99999999;
+
 		JSONObject root = new JSONObject(jsonToParse);
 		JSONArray rows = root.getJSONArray("rows");
+
+		if (rows.length() == 0 || rows == null) {
+			return distanceValue;
+		}
+
 		JSONObject element = rows.getJSONObject(0);
 		JSONArray elements = new JSONArray();
 
@@ -225,7 +233,6 @@ public class StationFinder {
 		}
 
 		String status = elements.getJSONArray(0).getJSONObject(0).getString("status");
-		int distanceValue = 99999999;
 
 		if (status.equalsIgnoreCase("ok")) {
 			distanceValue = elements.getJSONArray(0).getJSONObject(0).getJSONObject("distance").getInt("value");
@@ -234,9 +241,14 @@ public class StationFinder {
 		return distanceValue;
 	}
 
-	private void updateCsvNearestStation(String station) {
-		String longitude = "38.0114393";
-		String latitude = "-89.2361935";
+	private void updateCsvNearestStation(String station, String csvGeocode) {
+		// String longitude = "38.0114393";
+		// String latitude = "-89.2361935";
+
+		String[] split = csvGeocode.split(",");
+		String longitude = split[0];
+		String latitude = split[1];
+
 		String sql = "update station_info set stationID = ? where csv_long = ? and csv_lat = ?";
 
 		try {
@@ -249,6 +261,8 @@ public class StationFinder {
 			ps.setString(3, latitude);
 
 			ps.execute();
+			
+			System.out.println("done get stationID for = " + csvGeocode);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -256,11 +270,10 @@ public class StationFinder {
 
 	}
 
-	
-	public void getAllNullStationID(){
-		
+	public void getAllNullStationID() {
+
 		String sql = "select * from station_info where stationID is null ";
-		
+
 		try {
 			MySqlConnection mySqlDB = new MySqlConnection();
 			Connection conn = mySqlDB.getConnection();
@@ -268,12 +281,16 @@ public class StationFinder {
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ResultSet rs = ps.executeQuery();
 
-
 			while (rs.next()) {
 				String csvLong = rs.getString(5);
 				String csvLat = rs.getString(6);
-				
+
 				String longLat = csvLong + "," + csvLat;
+				
+				if(longLat.equalsIgnoreCase("0,0")){
+					continue;
+				}
+				
 				reverseGeocode(longLat);
 
 			}
@@ -281,7 +298,7 @@ public class StationFinder {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 }

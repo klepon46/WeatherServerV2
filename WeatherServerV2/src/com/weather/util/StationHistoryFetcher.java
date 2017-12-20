@@ -27,11 +27,8 @@ public class StationHistoryFetcher {
 
 		try {
 
-//			String url = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data?datasetid=PRECIP_15" + "&stationid=" + stationID
-//					+ "&units=metric" + "&startdate=1997-01-01" + "&enddate=2017-12-31";
-			
 			String url = 
-					"https://www.ncdc.noaa.gov/cdo-web/api/v2/data?datasetid=PRECIP_15&stationid=COOP:010063&units=metric&startdate=2010-05-01&enddate=2010-05-31";
+					"https://www.ncdc.noaa.gov/cdo-web/api/v2/data?datasetid=PRECIP_15&stationid=" +stationID+"&units=metric&startdate=2010-05-01&enddate=2010-05-31";
 
 			DefaultHttpClient httpClient = new DefaultHttpClient();
 			HttpGet getRequest = new HttpGet(url);

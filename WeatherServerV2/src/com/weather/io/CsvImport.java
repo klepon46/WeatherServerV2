@@ -14,7 +14,7 @@ import com.weather.sql.MySqlConnection;
 
 public class CsvImport {
 
-	private static final String TRACK_CSV = "csv/track.csv";
+	private static final String TRACK_CSV = "csv/wines_data.csv";
 	private Set<String> geoCodes;
 
 	public void prepareCsv() {
@@ -30,10 +30,10 @@ public class CsvImport {
 			while ((line = br.readLine()) != null) {
 				// use comma as separator
 				String[] geoCode = line.split(csvSplitBy);
-				if (geoCode[1] == null || geoCode[1].isEmpty())
+				if (geoCode[0] == null || geoCode[0].isEmpty())
 					continue;
 
-				geoCodes.add(geoCode[10]);
+				geoCodes.add(geoCode[0]);
 			}
 
 		} catch (FileNotFoundException e) {
@@ -72,7 +72,7 @@ public class CsvImport {
 				}
 
 				final PreparedStatement ps = conn.prepareStatement(
-						"INSERT INTO station_info (station_long, station_lat) VALUES (?,?);");
+						"INSERT INTO station_info (csv_long, csv_lat) VALUES (?,?);");
 				ps.setString(1, longitude);
 				ps.setString(2, latitude);
 
