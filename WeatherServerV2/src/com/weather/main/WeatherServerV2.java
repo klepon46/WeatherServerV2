@@ -22,7 +22,6 @@ public class WeatherServerV2 {
 		
 		//StationHistoryFetcher fetcher = new StationHistoryFetcher();
 		
-		
 		System.out.println("done");
 
 	}

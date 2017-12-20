@@ -28,11 +28,80 @@ import com.weather.sql.MySqlConnection;
 public class StationFinder {
 
 	private Map<String, Integer> stationMaps;
-	
-	public void findByTraversing(){
-		
-		
-		
+
+	public void findByTraversing(String csvGeocode) {
+		stationMaps = new HashMap<>();
+
+		String[] strInits = csvGeocode.split(",");
+
+		String csvStartLong = strInits[0];
+		String csvStartLat = strInits[0];
+
+		String[] csvLong = strInits[0].split("\\.");
+		String[] csvLat = strInits[1].split("\\.");
+
+		double startLong = Double.parseDouble(csvStartLong);
+		double startLat = Double.parseDouble(csvStartLat);
+
+		String sql = "select * from master_station where latitude like ? and longitude like ?";
+		MySqlConnection mySqlDB = new MySqlConnection();
+		Connection conn = null;
+
+		try {
+
+			conn = mySqlDB.getConnection();
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, csvLong[0] + "%");
+			ps.setString(2, csvLat[0] + "%");
+
+			ResultSet rs = ps.executeQuery();
+
+			// int rowcount = 0;
+			// if (rs.last()) {
+			// rowcount = rs.getRow();
+			// rs.beforeFirst();
+			// }
+			//
+			// System.out.println(rowcount);
+
+			while (rs.next()) {
+
+				String stationId = rs.getString(1);
+
+				double endLong = rs.getDouble(3);
+				double endLat = rs.getDouble(4);
+
+				Double distanceVal = Haversine.distance(startLat, startLong, endLat, endLong);
+
+				stationMaps.put(stationId, distanceVal.intValue());
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		Entry<String, Integer> min = null;
+		for (Entry<String, Integer> entry : stationMaps.entrySet()) {
+			if (min == null || min.getValue() > entry.getValue()) {
+				min = entry;
+			}
+		}
+
+		if (min != null) {
+			System.out.println("nearest " + min.getKey());
+			updateCsvNearestStation(min.getKey(), csvGeocode);
+
+		}
+
 	}
 
 	public void findNearestStationByContryCode(String countryOrState, String csvGeocode) {
@@ -79,8 +148,7 @@ public class StationFinder {
 			}
 		}
 
-		
-		if(min != null){
+		if (min != null) {
 			String nearestStation = min.getKey();
 			updateCsvNearestStation(nearestStation, csvGeocode);
 		}
@@ -261,7 +329,7 @@ public class StationFinder {
 			ps.setString(3, latitude);
 
 			ps.execute();
-			
+
 			System.out.println("done get stationID for = " + csvGeocode);
 
 		} catch (SQLException e) {
@@ -286,12 +354,14 @@ public class StationFinder {
 				String csvLat = rs.getString(6);
 
 				String longLat = csvLong + "," + csvLat;
-				
-				if(longLat.equalsIgnoreCase("0,0")){
+
+				if (longLat.equalsIgnoreCase("0,0")) {
 					continue;
 				}
-				
-				reverseGeocode(longLat);
+
+				findByTraversing(longLat);
+
+				// reverseGeocode(longLat);
 
 			}
 
