@@ -43,8 +43,8 @@ public class MySqlConnection {
 			// String password = properties.getProperty("db.password");
 
 			String user = "root";
-			String password = "RDikGbg1njEtokc";
-			// String password = "ahmids";
+			//String password = "RDikGbg1njEtokc";
+			 String password = "ahmids";
 
 			MySqlConnection.userName = user;
 			MySqlConnection.password = password;

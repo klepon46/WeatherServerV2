@@ -8,5 +8,9 @@
 	<classpathentry kind="lib" path="lib/httpcore-4.1.jar"/>
 	<classpathentry kind="lib" path="lib/json-20170516.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.43.jar"/>
+	<classpathentry kind="lib" path="lib/opencsv-4.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-beanutils-1.9.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-text-1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
